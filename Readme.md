@@ -1,4 +1,4 @@
-# Market Intelligence (Oculus UI)
+# OCULUS (Market Intelligence
 
 A market intelligence dashboard for Indonesian (IDX) stocks. It combines sector discovery, technical, fundamental and narrative analysis, and broker/foreign-flow data into one view, with an AI-generated narrative summary on top.
 
