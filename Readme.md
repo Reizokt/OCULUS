@@ -1,100 +1,489 @@
-# OCULUS (Market Intelligence
+# OCULUS — Market Intelligence Platform
 
-A market intelligence dashboard for Indonesian (IDX) stocks. It combines sector discovery, technical, fundamental and narrative analysis, and broker/foreign-flow data into one view, with an AI-generated narrative summary on top.
+**OCULUS** is a market intelligence platform for Indonesian (IDX) stocks, built to transform raw market data into actionable analytical signals and readable market insights.
 
-Built for **Sectors Hackathon 2026 (Track 3: Market Intelligence)** using the [Sectors.app](https://sectors.app) API.
+The platform combines **market and sector discovery, technical analysis, fundamental analysis, company assessment, narrative analysis, broker activity, and foreign-flow data** into a unified dashboard. A **RAG-powered AI layer** then uses the generated analytical context to produce concise narrative summaries.
+
+Built for the **Sectors Hackathon 2026 — Track 3: Market Intelligence**, with the **Sectors.app API v2** as the core market-data source.
+
+---
+
+## Overview
+
+Financial market data can be difficult to interpret when information is distributed across different datasets and analytical perspectives.
+
+OCULUS addresses this by bringing multiple market intelligence signals into one platform:
+
+```text
+Sectors.app Market Data
+          │
+          ▼
+     Redis Cache
+          │
+          ▼
+ ┌───────────────────────┐
+ │   Analysis Modules    │
+ │                       │
+ │ • Market / Sector     │
+ │ • Technical           │
+ │ • Fundamental         │
+ │ • Company             │
+ │ • Narrative           │
+ │ • Broker / Flow       │
+ └───────────┬───────────┘
+             │
+             ▼
+      Derived Signals
+             │
+             ▼
+     RAG Context Layer
+       ChromaDB + Gemini
+             │
+             ▼
+     AI Narrative Summary
+             │
+             ▼
+       OCULUS Dashboard
+```
+
+The goal is not to replace financial research, but to provide a **structured intelligence layer** that helps users identify companies, sectors, and market signals worth investigating further.
+
+---
 
 ## Features
 
-- **Sector and sub-sector ranking**: finds the hot sub-sectors from market cap and daily price change
-- **Technical analysis**: trend and indicator-based signals
-- **Fundamental analysis**: bank-aware scoring covering profitability, financial risk, growth and valuation, with data coverage and flags
-- **Narrative analysis**: insider activity, filings and corporate actions
-- **Broker analysis**: broker ranking, broker activity and foreign flow
-- **RAG narrative summary**: Chroma vector store and Google Gemini turn the module outputs into a readable summary
-- **API caching**: TTL cache checked before any Sectors.app call, to save API quota
+### Market & Sector Intelligence
+
+Identify market areas showing notable activity and potential opportunities for further investigation.
+
+* Sector ranking
+* Sub-sector ranking
+* Market-cap-based analysis
+* Daily price movement analysis
+* Market activity comparison
+* Identification of relatively strong or active sub-sectors
+
+---
+
+### Technical Analysis
+
+Analyze historical price behavior and generate technical signals.
+
+Includes:
+
+* Trend analysis
+* Price movement analysis
+* Technical indicators
+* Support and resistance analysis
+* Price-range analysis
+* Volatility analysis
+* Trend-oriented signals
+* Historical market behavior
+
+The technical module is designed to provide **signals and context rather than direct trading instructions**.
+
+---
+
+### Fundamental Analysis
+
+Evaluate companies using financial metrics and company fundamentals.
+
+The fundamental scoring framework considers:
+
+* Profitability
+* Financial risk
+* Growth
+* Valuation
+* Leverage-related metrics
+* Company-specific financial characteristics
+* Data coverage and quality flags
+
+The scoring system also accounts for differences between company types, including **bank-aware analysis**, where appropriate.
+
+---
+
+### Company Analysis
+
+OCULUS combines multiple analytical perspectives to provide a broader assessment of individual companies.
+
+A company can be evaluated through:
+
+```text
+Technical Signals
+       +
+Fundamental Metrics
+       +
+Corporate / Narrative Events
+       +
+Market Activity
+       +
+Broker / Flow Data
+       ↓
+Company Intelligence
+```
+
+This allows users to move beyond a single metric and investigate companies through multiple dimensions.
+
+---
+
+### Narrative Analysis
+
+OCULUS incorporates company events and market narratives that may provide additional context around price and company activity.
+
+The narrative module can analyze information such as:
+
+* Insider activity
+* Company filings
+* Corporate actions
+* Market-related events
+* Other relevant company information available through Sectors.app
+
+---
+
+### Broker & Foreign-Flow Analysis
+
+Analyze market activity from broker and foreign-flow perspectives.
+
+Includes:
+
+* Broker activity
+* Broker rankings
+* Trading activity
+* Foreign flow
+* Flow-oriented market signals
+
+This provides an additional perspective beyond price and financial statements.
+
+---
+
+### RAG-Powered Narrative Summary
+
+OCULUS uses a Retrieval-Augmented Generation (RAG) pipeline to convert analytical outputs into a readable narrative.
+
+The pipeline uses:
+
+```text
+Analysis Results
+      │
+      ▼
+Context Ingestion
+      │
+      ▼
+ChromaDB Vector Store
+      │
+      ▼
+Relevant Context Retrieval
+      │
+      ▼
+Google Gemini
+      │
+      ▼
+Narrative Summary
+```
+
+Instead of asking the LLM to independently determine market data, OCULUS provides the model with the analytical context generated by the platform.
+
+This allows the AI layer to function primarily as an **explanation and synthesis layer**.
+
+---
+
+### Redis API Caching
+
+OCULUS uses **Redis** as a caching layer between the FastAPI backend and Sectors.app.
+
+Before making a Sectors.app request:
+
+```text
+API Request
+     │
+     ▼
+Check Redis
+     │
+ ┌───┴────┐
+ │        │
+Hit     Miss / Expired
+ │        │
+ ▼        ▼
+Return   Sectors.app
+Cache       │
+            ▼
+         Redis
+            │
+            ▼
+       Return Data
+```
+
+This helps:
+
+* Reduce repeated API requests
+* Improve response time for cached requests
+* Reduce unnecessary Sectors.app API usage
+* Conserve API quota during development and demonstrations
+
+---
+
+## Architecture
+
+```text
+┌──────────────────────────────────────────────┐
+│                 OCULUS UI                    │
+│       Next.js + React + TypeScript           │
+└──────────────────────┬───────────────────────┘
+                       │
+                       ▼
+┌──────────────────────────────────────────────┐
+│                 FastAPI                      │
+│              Backend Services                │
+└───────────────┬──────────────┬───────────────┘
+                │              │
+                ▼              ▼
+        ┌──────────────┐  ┌──────────────────┐
+        │    Redis     │  │ Analysis Modules │
+        │    Cache     │  │                  │
+        └──────┬───────┘  │ • Sector         │
+               │          │ • Technical      │
+               │          │ • Fundamental    │
+               │          │ • Narrative      │
+               │          │ • Broker         │
+               │          └────────┬─────────┘
+               │                   │
+               ▼                   ▼
+        ┌──────────────┐    ┌──────────────┐
+        │ Sectors.app  │    │ RAG Pipeline │
+        │    API v2    │    │              │
+        └──────────────┘    │ ChromaDB     │
+                            │ + Gemini     │
+                            └──────────────┘
+```
+
+---
 
 ## Tech Stack
 
-| Layer | Technology |
-|---|---|
-| Backend | Python, FastAPI |
-| Data | Sectors.app API v2 |
-| AI / RAG | ChromaDB, Google Gemini |
-| Frontend | Next.js, React, TypeScript, Tailwind CSS |
+| Layer           | Technology                                 |
+| --------------- | ------------------------------------------ |
+| Frontend        | Next.js, React, TypeScript, Tailwind CSS   |
+| Backend         | Python, FastAPI                            |
+| Market Data     | Sectors.app API v2                         |
+| Caching         | Redis                                      |
+| Vector Database | ChromaDB                                   |
+| Generative AI   | Google Gemini                              |
+| Development     | Git, GitHub, Docker / WSL where applicable |
+
+---
 
 ## Project Structure
 
-```
+```text
 Market_Intelligence/
+│
 ├── Backend/
-│   ├── FastAPI_Service.py          # API entry point
+│   ├── FastAPI_Service.py
+│   │
 │   ├── app/
-│   │   ├── Analysis/               # Fundamental, narrative, sector, technical, broker analysis
-│   │   ├── Cache/                  # TTL cache layer
-│   │   ├── Data/                   # Sectors.app API calls
-│   │   ├── RAG_Narrative_Analysis/ # ingest, retrieve, generate (Chroma + Gemini)
-│   │   └── Service/                # Service functions used by the API routes
-│   └── data/                       # Generated: narrative cache + vector DB (git-ignored)
+│   │   ├── Analysis/
+│   │   │   ├── Fundamental/
+│   │   │   ├── Narrative/
+│   │   │   ├── Sector/
+│   │   │   ├── Technical/
+│   │   │   └── Broker/
+│   │   │
+│   │   ├── Cache/
+│   │   │   └── Redis cache implementation
+│   │   │
+│   │   ├── Data/
+│   │   │   └── Sectors.app API integration
+│   │   │
+│   │   ├── RAG_Narrative_Analysis/
+│   │   │   ├── ingest
+│   │   │   ├── retrieve
+│   │   │   └── generate
+│   │   │
+│   │   └── Service/
+│   │       └── API service functions
+│   │
+│   └── data/
+│       └── Runtime-generated data
+│
 ├── frontend/
-│   └── oculusui/                   # Next.js app
-├── top20.json / top150.json        # Sample data for offline testing
+│   └── oculusui/
+│       └── Next.js application
+│
+├── top20.json
+├── top150.json
 ├── requirement.txt
 └── README.md
 ```
 
-## Prerequisites
+> Runtime-generated cache data and the local vector database should not be committed to the repository.
 
-- Python 3.10+
-- Node.js 18+
-- A [Sectors.app](https://sectors.app) API key
-- A Google Gemini API key (free tier works)
+---
 
-## Setup
+## Data Flow
 
-### 1. Clone
+A typical OCULUS request follows this flow:
+
+```text
+User
+ │
+ ▼
+Next.js Frontend
+ │
+ ▼
+FastAPI Endpoint
+ │
+ ▼
+Redis Cache Check
+ │
+ ├── Cache Hit ───────────────► Return Cached Data
+ │
+ └── Cache Miss / Expired
+          │
+          ▼
+     Sectors.app API
+          │
+          ▼
+      Store in Redis
+          │
+          ▼
+    Analysis Module
+          │
+          ▼
+   Derived Signals
+          │
+          ▼
+      RAG Context
+          │
+          ▼
+      ChromaDB
+          │
+          ▼
+     Google Gemini
+          │
+          ▼
+   Narrative Summary
+          │
+          ▼
+      Frontend
+```
+
+---
+
+## Getting Started
+
+### Prerequisites
+
+Make sure the following are installed:
+
+* Python 3.10+
+* Node.js 18+
+* Redis
+* A Sectors.app API key
+* A Google Gemini API key
+
+---
+
+### 1. Clone the Repository
 
 ```bash
-git clone <your-repo-url>
+git clone <your-repository-url>
 cd Market_Intelligence
 ```
 
-### 2. Backend
+---
+
+### 2. Create the Python Environment
 
 ```bash
 python -m venv venv
+```
 
-# Windows
+#### Windows
+
+```bash
 venv\Scripts\activate
-# macOS / Linux
-source venv/bin/activate
+```
 
+#### macOS / Linux
+
+```bash
+source venv/bin/activate
+```
+
+Install dependencies:
+
+```bash
 pip install -r requirement.txt
 ```
 
-Create `Backend/.env` (see `.env.example`):
+---
+
+### 3. Configure Environment Variables
+
+Create:
+
+```text
+Backend/.env
+```
+
+Add:
 
 ```env
 SECTORS_API_KEY=your_sectors_api_key
 GEMINI_API_KEY=your_gemini_api_key
 ```
 
-Build the vector store for the RAG summary (first run only):
+Do not commit API keys or other secrets to Git.
+
+---
+
+### 4. Start Redis
+
+Make sure your Redis server is running before starting the backend.
+
+For example, when using Redis through WSL:
 
 ```bash
-cd Backend
+redis-server
+```
+
+Verify that Redis is available to the application before continuing.
+
+---
+
+### 5. Build the RAG Vector Store
+
+The vector store needs to be initialized before using the RAG narrative module.
+
+From the `Backend` directory:
+
+```bash
 python -m app.RAG_Narrative_Analysis.ingest
 ```
 
-Start the API:
+This generates the local vector-store data used by the RAG pipeline.
+
+---
+
+### 6. Start the FastAPI Backend
+
+From the `Backend` directory:
 
 ```bash
 uvicorn FastAPI_Service:app --reload --port 8000
 ```
 
-API docs are available at http://localhost:8000/docs.
+FastAPI documentation will be available at:
 
-### 3. Frontend
+```text
+http://localhost:8000/docs
+```
+
+---
+
+### 7. Start the Frontend
+
+Open another terminal:
 
 ```bash
 cd frontend/oculusui
@@ -102,17 +491,116 @@ npm install
 npm run dev
 ```
 
-Open http://localhost:3000.
+Then open:
 
-## Caching
+```text
+http://localhost:3000
+```
 
-Every Sectors.app call goes through a cache first. On a hit, the cached data is returned. On a miss or an expired TTL, the API is called and the result is stored. Cached narrative summaries are saved in `Backend/data/cache/`.
+---
 
-## Notes
+## Caching Strategy
 
-- `Backend/data/` (cache and vector DB) is generated at runtime and not committed. Run the ingest step after cloning.
-- This project is for informational purposes only and is not financial advice.
+OCULUS uses Redis as a TTL-based caching layer for Sectors.app requests.
+
+The general strategy is:
+
+```text
+Request
+   │
+   ▼
+Generate Cache Key
+   │
+   ▼
+Redis GET
+   │
+   ├── Exists + Valid ──► Return Cached Response
+   │
+   └── Missing / Expired
+             │
+             ▼
+       Sectors.app API
+             │
+             ▼
+        Redis SET + TTL
+             │
+             ▼
+       Return Response
+```
+
+The cache is designed to reduce unnecessary calls to the external market-data API while keeping the application responsive during repeated requests.
+
+---
+
+## RAG Pipeline
+
+The RAG system is separated into three conceptual stages:
+
+### 1. Ingest
+
+Relevant analytical information is prepared and stored in the ChromaDB vector store.
+
+### 2. Retrieve
+
+When a narrative summary is requested, relevant context is retrieved from the vector store.
+
+### 3. Generate
+
+Google Gemini receives the retrieved analytical context and generates a readable narrative summary.
+
+This separation keeps the **market-data and analytical logic independent from the generative AI layer**.
+
+---
+
+## Design Philosophy
+
+OCULUS is designed around several principles:
+
+### Data First
+
+Sectors.app remains the core market-data source. Analytical modules operate on retrieved market information rather than relying on an LLM to invent or infer raw financial data.
+
+### Multiple Signals
+
+A company should not be evaluated using a single metric. OCULUS combines technical, fundamental, narrative and flow-related information to provide broader context.
+
+### Explainable Analysis
+
+Derived scores and signals are intended to help users understand **why a company or sector deserves further investigation**.
+
+### AI as an Explanation Layer
+
+The RAG/LLM component is primarily used to synthesize and explain existing analytical context rather than act as the primary source of market data.
+
+### Efficient API Usage
+
+Redis caching reduces unnecessary repeated requests to the Sectors.app API and helps manage API quota.
+
+---
+
+## Hackathon
+
+OCULUS was developed for:
+
+**Sectors Hackathon 2026**
+**Track 3 — Market Intelligence**
+
+The project uses the **Sectors.app API v2** as its core external market-data source.
+
+---
+
+## Disclaimer
+
+OCULUS is an experimental market intelligence and analytical tool.
+
+The information and signals generated by the platform are intended for **research and informational purposes only** and should not be considered financial advice, investment advice, or a recommendation to buy or sell any security.
+
+Users should perform their own research and consider relevant financial risks before making investment decisions.
+
+---
 
 ## Author
 
-**Username: @joenath376xfc1x **: PT Solohackathon Team
+**@joenath376xfc1x**
+PT Solohackathon Team
+
