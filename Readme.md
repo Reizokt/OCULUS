@@ -7,7 +7,6 @@ Built for **Sectors Hackathon 2026 (Track 3: Market Intelligence)** using the [S
 ## Features
 
 - **Sector and sub-sector ranking**: finds the hot sub-sectors from market cap and daily price change
-- **Top company screener**: top 20 / top 150 stocks by daily change
 - **Technical analysis**: trend and indicator-based signals
 - **Fundamental analysis**: bank-aware scoring covering profitability, financial risk, growth and valuation, with data coverage and flags
 - **Narrative analysis**: insider activity, filings and corporate actions
