@@ -112,9 +112,8 @@ Every Sectors.app call goes through a cache first. On a hit, the cached data is 
 ## Notes
 
 - `Backend/data/` (cache and vector DB) is generated at runtime and not committed. Run the ingest step after cloning.
-- `top20.json` and `top150.json` are sample responses for testing without using API quota.
 - This project is for informational purposes only and is not financial advice.
 
 ## Author
 
-**Jonathan Giono Suparmo**: Informatics, President University
+**Username: @joenath376xfc1x **: PT Solohackathon Team
